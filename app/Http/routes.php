@@ -16,6 +16,7 @@ $app->get('/', function() use ($app) {
 });
 
 // Auction endpoints
+$app->get('auctions', 'AuctionController@showAll');
 $app->get('auction/{id}', 'AuctionController@showInfo');
 $app->get('auction/{id}/bids', 'AuctionController@showBids');
 $app->post('auction/{id}/close', 'AuctionController@doClose');
@@ -25,6 +26,10 @@ $app->post('auction/{id}/delete', 'AuctionController@doDelete');
 // Bid endpoints
 $app->get('bid/{id}', 'BidController@showInfo');
 $app->post('bid/on/{id}', 'BidController@doAuctionBid');
+
+// Item endpoints
+$app->get('items', 'ItemController@showAll');
+$app->get('item/{id}', 'ItemController@showInfo');
 
 // User endpoints
 $app->get('user/{id}', 'UserController@showInfo');
