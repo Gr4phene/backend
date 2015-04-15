@@ -1,16 +1,55 @@
 <?php namespace App\Http\Controllers;
 
-use App\User;
-use App\Http\Controllers\Controller;
+use App\Models\Bid;
+use Illuminate\Http\Request;
 
-class BidController extends Controller {
+class BidController extends Controller
+{
 
-  public function showInfo($id) {
+    /**
+     * Expose information about a bid as a json response
+     *
+     * @param Request $request
+     * @param $id
+     * @return string
+     */
+    public function showInfo(Request $request, $id)
+    {
+        // Ensure that the id is a integer string
+        $this->validate($request, [
+            'id' => 'integer'
+        ]);
 
-  }
+        // Fetch the auction info
+        return Bid::find($id);
+    }
 
-  public function doAuctionBid($id) {
+    /**
+     * Post a new bid for an auction and return its id
+     *
+     * @param Request $request
+     * @param $id
+     * @return string
+     */
+    public function doAuctionBid(Request $request, $id)
+    {
+        // Ensure that POST parameters are valid
+        $this->validate($request, [
+            'id' => 'integer',
+            'bidder' => 'integer',
+            'emeralds' => 'integer'
+        ]);
 
-  }
-  
+        // Create the bid
+        $bid = new Bid;
+
+        $bid->bidder = $request->input('bidder');
+        $bid->emeralds = $request->input('emeralds');
+        $bid->auction_id = $id;
+
+        $bid->save();
+
+        return json_encode(['id' => $bid->id]);
+    }
+
 }
