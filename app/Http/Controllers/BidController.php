@@ -20,7 +20,7 @@ class BidController extends Controller
             'id' => 'integer'
         ]);
 
-        // Fetch the auction info
+        // Fetch the bid info
         return Bid::find($id);
     }
 

@@ -112,7 +112,7 @@ class UserController extends Controller
             'karma' => 'integer'
         ]);
 
-        // Fetch the auction bid list
+        // Fetch the user list
         return User::where('karma', '>', $karma)->skip(100 * $page)->take($limit)->get();
     }
 
