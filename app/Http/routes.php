@@ -34,6 +34,7 @@ $app->get('item/{id}', 'ItemController@showInfo');
 // User endpoints
 $app->get('users', 'UserController@showAll');
 $app->post('user/create', 'UserController@doCreate');
+$app->post('user/create', 'UserController@doCreate');
 $app->get('user/{id}', 'UserController@showInfo');
 $app->post('user/{id}/hate', 'UserController@doHate');
 $app->post('user/{id}/love', 'UserController@doLove');

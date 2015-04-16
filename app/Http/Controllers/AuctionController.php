@@ -22,9 +22,9 @@ class AuctionController extends Controller
 
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'limit' => 'integer',
-            'page' => 'integer',
-            'status' => 'in:closed,deleted,open'
+            'limit' => 'integer|required',
+            'page' => 'integer|required',
+            'status' => 'in:closed,deleted,open|required'
         ]);
 
         // Fetch the auction bid list
@@ -42,7 +42,7 @@ class AuctionController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Fetch the auction info
@@ -64,9 +64,9 @@ class AuctionController extends Controller
 
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer',
-            'limit' => 'integer',
-            'page' => 'integer'
+            'id' => 'integer|required',
+            'limit' => 'integer|required',
+            'page' => 'integer|required'
         ]);
 
         // Fetch the auction bid list
@@ -84,19 +84,25 @@ class AuctionController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
-        // Fetch the highest bid
-        $highest_bid_id = Bid::where('auction_id', $id)->orderBy('emeralds', 'desc')->take(1)->pluck('id');
-
-        // Set the auction as closed
+        // Check that an auction should be closed
         $auction = Auction::find($id);
-        $auction->highest_bid_id = $highest_bid_id;
-        $auction->status = 'closed';
 
-        // Return info as a json dump
-        return json_encode(['completed' => true]);
+        if (strtotime($auction->ends_at) >= strtotime($auction->created_at) && UserController::getAuthenticatedUser()) {
+            // Fetch the highest bid
+            $highest_bid_id = Bid::where('auction_id', $id)->orderBy('emeralds', 'desc')->take(1)->pluck('id');
+
+            // Set the auction as closed
+            $auction->highest_bid_id = $highest_bid_id;
+            $auction->status = 'closed';
+
+            // Return info as a json dump
+            return response()->json(['completed' => true]);
+        } else {
+            return response()->json(['completed' => false]);
+        }
     }
 
     /**
@@ -107,27 +113,32 @@ class AuctionController extends Controller
      */
     public function doCreate(Request $request)
     {
-        // Ensure that POST parameters are valid
-        $this->validate($request, [
-            'creator' => 'alpha_num',
-            'item_name' => 'alpha',
-            'item_desc' => 'alpha_num',
-            'ends_at' => 'date',
-            'starting_bid' => 'integer'
-        ]);
+        // Make sure we have a user token
+        if (UserController::getAuthenticatedUser()) {
+            // Ensure that POST parameters are valid
+            $this->validate($request, [
+                'creator' => 'alpha_num|required',
+                'item_name' => 'alpha|required',
+                'item_desc' => 'alpha_num|required',
+                'ends_at' => 'date|required',
+                'starting_bid' => 'integer|required'
+            ]);
 
-        // Create the auction
-        $auction = new Auction;
+            // Create the auction
+            $auction = new Auction;
 
-        $auction->creator = $request->input('creator');
-        $auction->item_name = $request->input('item_name');
-        $auction->item_desc = $request->input('item_desc');
-        $auction->ends_at = $request->input('ends_at');
-        $auction->starting_bid = $request->input('starting_bid');
+            $auction->creator = $request->input('creator');
+            $auction->item_name = $request->input('item_name');
+            $auction->item_desc = $request->input('item_desc');
+            $auction->ends_at = $request->input('ends_at');
+            $auction->starting_bid = $request->input('starting_bid');
 
-        $auction->save();
+            $auction->save();
 
-        return json_encode(['id' => $auction->id]);
+            return response()->json(['id' => $auction->id]);
+        } else {
+            return response()->json(['completed' => true]);
+        }
     }
 
     /**
@@ -141,15 +152,21 @@ class AuctionController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Set the auction as closed
         $auction = Auction::find($id);
-        $auction->status = 'deleted';
 
-        // Return info as a json dump
-        return json_encode(['completed' => true]);
+        // Ensure that the user is the same as the one who created it
+        if(UserController::getAuthenticatedUser() == $auction->creator) {
+            $auction->status = 'deleted';
+
+            // Return info as a json dump
+            return response()->json(['completed' => true]);
+        } else {
+            return response()->json(['completed' => false]);
+        }
     }
 
 }

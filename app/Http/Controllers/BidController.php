@@ -33,23 +33,28 @@ class BidController extends Controller
      */
     public function doAuctionBid(Request $request, $id)
     {
-        // Ensure that POST parameters are valid
-        $this->validate($request, [
-            'id' => 'integer',
-            'bidder' => 'integer',
-            'emeralds' => 'integer'
-        ]);
+        // Make sure we have a user token
+        if (UserController::getAuthenticatedUser()) {
+            // Ensure that POST parameters are valid
+            $this->validate($request, [
+                'id' => 'integer',
+                'bidder' => 'integer',
+                'emeralds' => 'integer'
+            ]);
 
-        // Create the bid
-        $bid = new Bid;
+            // Create the bid
+            $bid = new Bid;
 
-        $bid->bidder = $request->input('bidder');
-        $bid->emeralds = $request->input('emeralds');
-        $bid->auction_id = $id;
+            $bid->bidder = $request->input('bidder');
+            $bid->emeralds = $request->input('emeralds');
+            $bid->auction_id = $id;
 
-        $bid->save();
+            $bid->save();
 
-        return json_encode(['id' => $bid->id]);
+            return response()->json(['id' => $bid->id]);
+        } else {
+            return response()->json(['completed' => true]);
+        }
     }
 
 }

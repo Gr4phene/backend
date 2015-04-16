@@ -2,6 +2,10 @@
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -17,7 +21,7 @@ class UserController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Return info as a json dump
@@ -35,15 +39,44 @@ class UserController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Get current karma
         $user = User::find($id);
-        $user->decrement('karma');
 
-        // Return info as a json dump
-        return json_encode(['completed' => true]);
+        // Ensure that this isn't self-karma
+        if (UserController::getAuthenticatedUser() !== $user->id) {
+            $user->decrement('karma');
+
+            // Return info as a json dump
+            return response()->json(['completed' => true]);
+        } else {
+            return response()->json(['completed' => true]);
+        }
+    }
+
+    /**
+     * Get a user from a request auth token
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public static function getAuthenticatedUser()
+    {
+        try {
+            if (!$user = JWTAuth::parseToken()->authenticate()) {
+                return response()->json(['user_not_found'], 404);
+            }
+        } catch (TokenExpiredException $e) {
+            return false;
+        } catch (TokenInvalidException $e) {
+            return false;
+        } catch (JWTException $e) {
+            return false;
+        }
+
+        // the token is valid and we have found the user via the sub claim
+        return response()->json(compact('user'));
     }
 
     /**
@@ -57,15 +90,21 @@ class UserController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Get current karma
         $user = User::find($id);
-        $user->increment('karma');
 
-        // Return info as a json dump
-        return json_encode(['completed' => true]);
+        // Ensure that this isn't self-karma
+        if (UserController::getAuthenticatedUser() !== $user->id) {
+            $user->increment('karma');
+
+            // Return info as a json dump
+            return response()->json(['completed' => true]);
+        } else {
+            return response()->json(['completed' => true]);
+        }
     }
 
     /**
@@ -79,7 +118,7 @@ class UserController extends Controller
     {
         // Ensure that POST parameters are valid
         $this->validate($request, [
-            'name' => 'alpha_num|between:1,16'
+            'name' => 'alpha_num|between:1,16|required|unique:users'
         ]);
 
         // Create the user
@@ -89,7 +128,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return json_encode(['id' => $user->id]);
+        return response()->json(['id' => $user->id]);
     }
 
     /**
@@ -107,13 +146,38 @@ class UserController extends Controller
 
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'limit' => 'integer',
-            'page' => 'integer',
-            'karma' => 'integer'
+            'limit' => 'integer|required',
+            'page' => 'integer|required',
+            'karma' => 'integer|required'
         ]);
 
         // Fetch the user list
         return User::where('karma', '>', $karma)->skip(100 * $page)->take($limit)->get();
+    }
+
+    /**
+     * "Login" a user by registering a token for their session
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function doAuthenticate(Request $request)
+    {
+        // grab credentials from the request
+        $credentials = $request->only('username', 'password');
+
+        try {
+            // attempt to verify the credentials and create a token for the user
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'invalid_credentials'], 401);
+            }
+        } catch (JWTException $e) {
+            // something went wrong whilst attempting to encode the token
+            return response()->json(['error' => 'could_not_create_token'], 500);
+        }
+
+        // all good so return the token
+        return response()->json(compact('token'));
     }
 
 }

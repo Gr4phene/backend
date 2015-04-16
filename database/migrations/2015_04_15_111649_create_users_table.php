@@ -20,6 +20,7 @@ class CreateUsersTable extends Migration
             // Add the table's columns
             $table->string('name', 16);
             $table->integer('karma')->default(0);
+            $table->string('password');
             $table->timestamps();
         });
     }
