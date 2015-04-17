@@ -37,7 +37,7 @@ class BidController extends Controller
         $auction_status = Auction::find($id)->pluck('status');
         
         // Make sure we have a user token + check status
-        if (UserController::getAuthenticatedUser() && $auction_status == "open") {
+        if (UserController::getAuthenticatedUser() && $auction_status == 'open') {
             // Ensure that POST parameters are valid
             $this->validate($request, [
                 'id' => 'integer|required',
