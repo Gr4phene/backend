@@ -17,7 +17,7 @@ class BidController extends Controller
     {
         // Ensure that the id is a integer string
         $this->validate($request, [
-            'id' => 'integer'
+            'id' => 'integer|required'
         ]);
 
         // Fetch the bid info
@@ -33,13 +33,16 @@ class BidController extends Controller
      */
     public function doAuctionBid(Request $request, $id)
     {
-        // Make sure we have a user token
-        if (UserController::getAuthenticatedUser()) {
+        // We need to make sure the auction is still open
+        $auction_status = Auction::find($id)->pluck('status');
+        
+        // Make sure we have a user token + check status
+        if (UserController::getAuthenticatedUser() && $auction_status == "open") {
             // Ensure that POST parameters are valid
             $this->validate($request, [
-                'id' => 'integer',
-                'bidder' => 'integer',
-                'emeralds' => 'integer'
+                'id' => 'integer|required',
+                'bidder' => 'integer|required',
+                'emeralds' => 'integer|required'
             ]);
 
             // Create the bid
@@ -53,7 +56,7 @@ class BidController extends Controller
 
             return response()->json(['id' => $bid->id]);
         } else {
-            return response()->json(['completed' => true]);
+            return response()->json(['completed' => false]);
         }
     }
 
