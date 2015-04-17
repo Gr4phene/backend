@@ -111,10 +111,9 @@ class UserController extends Controller
      * Create a user and return its id
      *
      * @param Request $request
-     * @param $id
      * @return string
      */
-    public function doCreate(Request $request, $id)
+    public function doCreate(Request $request)
     {
         // Ensure that POST parameters are valid
         $this->validate($request, [
