@@ -90,7 +90,7 @@ class AuctionController extends Controller
         // Check that an auction should be closed
         $auction = Auction::find($id);
 
-        if (strtotime($auction->ends_at) >= strtotime($auction->created_at) && UserController::getAuthenticatedUser()) {
+        if (strtotime($auction->ends_at) >= strtotime($auction->created_at) && UserController::getAuthenticatedUser() && $auction->status == "open") {
             // Fetch the highest bid
             $highest_bid_id = Bid::where('auction_id', $id)->orderBy('emeralds', 'desc')->take(1)->pluck('id');
 
@@ -159,7 +159,7 @@ class AuctionController extends Controller
         $auction = Auction::find($id);
 
         // Ensure that the user is the same as the one who created it
-        if(UserController::getAuthenticatedUser() == $auction->creator) {
+        if(UserController::getAuthenticatedUser() == $auction->creator && $auction->status == "open") {
             $auction->status = 'deleted';
 
             // Return info as a json dump
