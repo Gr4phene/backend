@@ -25,7 +25,7 @@ class UserController extends Controller
         ]);
 
         // Return info as a json dump
-        return User::find($id);
+        return User::find($id)->select(['id', 'name', 'karma']);
     }
 
     /**
@@ -52,7 +52,7 @@ class UserController extends Controller
             // Return info as a json dump
             return response()->json(['completed' => true]);
         } else {
-            return response()->json(['completed' => true]);
+            return response()->json(['completed' => false]);
         }
     }
 
@@ -103,7 +103,7 @@ class UserController extends Controller
             // Return info as a json dump
             return response()->json(['completed' => true]);
         } else {
-            return response()->json(['completed' => true]);
+            return response()->json(['completed' => false]);
         }
     }
 
